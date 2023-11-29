@@ -1,0 +1,39 @@
+body {
+  display: flex;
+  flex-direction: column; /* Change to column direction */
+  align-items: center;
+  justify-content: flex-start; /* Align content at the top */
+  min-height: 100vh; /* Set a minimum height */
+  margin: 0;
+  overflow-y: auto;
+}
+
+.container {
+  text-align: center;
+  border: 3px solid black;
+}
+
+textarea {
+  width: 300px;
+  height: 150px;
+}
+
+button {
+  margin-top: 10px;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  text-align: center;
+}
+
+p {
+  text-align: center;
+}
+
+.error {
+  color: red;
+}
