@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-
 import {TextToSpeechButton} from './Components';
 import {TextModule} from './Components';
 import {ImageModule} from './Components'
@@ -78,6 +77,7 @@ function App() {
           </label>
         </div>
       )}
+      
       <button onClick={handleSummarize}>Summarize</button>
       <div>
         <h2>Summarization Result:</h2>

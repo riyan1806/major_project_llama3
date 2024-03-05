@@ -1,0 +1,13 @@
+import pyephem
+
+# Create a PyEphem object for the planet you want to calculate the longitude of
+planet = pyephem.Mercury()
+
+# Set the date and time for which you want to calculate the longitude
+date = pyephem.Date('2023/08/04 12:00:00')
+
+# Calculate the planet's longitude
+longitude = planet.hlon(date)
+
+# Print the longitude
+print(longitude)

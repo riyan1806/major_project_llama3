@@ -16,9 +16,7 @@ from flask import send_file
 app = Flask(__name__)
 CORS(app)
 
-# Define BART model for text summarization
-checkpoint_text = "facebook/bart-large-cnn"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_text)
+
 
 # Define API URLs and headers for text and audio models
 API_URL_TEXT = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
