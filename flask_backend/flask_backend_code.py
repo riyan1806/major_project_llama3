@@ -11,11 +11,18 @@ import shutil
 import traceback
 from werkzeug.utils import secure_filename
 from flask import send_file
+from pdf2image import convert_from_bytes
+from io import BytesIO
+from doctr.io import DocumentFile
+from doctr.models import ocr_predictor
+import os
+import datetime
+import shutil
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
-
+CORS(app, origins=['http://localhost:3000'])
 # Define BART model for text summarization
 checkpoint_text = "facebook/bart-large-cnn"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint_text)
@@ -269,6 +276,51 @@ def caption_image():
     except Exception as e:
         # Handle exceptions and return an error response
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/extract_text', methods=['POST'])
+def extract_text():
+    # Get the uploaded file
+    pdf_file = request.files['pdf_file']
+    
+    # Convert PDF to images
+    images = convert_from_bytes(pdf_file.read(), 500)
+    
+    # Create a timestamp for the temporary directory
+    d = datetime.datetime.now()
+    timestamp = '%04d%02d%02d%02d%02d' % (d.year, d.month, d.day, d.hour, d.minute)
+    
+    # Create a temporary directory
+    os.makedirs(timestamp)
+    
+    pages = []
+    alltext = []
+    
+    # Save each page as an image and extract text
+    for i in range(len(images)):
+        images[i].save(os.path.join(timestamp, f'p{i}.jpg'), 'JPEG')
+        pages.append(os.path.join(timestamp, f'p{i}.jpg'))
+
+    # Initialize the OCR model
+    model = ocr_predictor(det_arch='db_resnet50', reco_arch='crnn_vgg16_bn', pretrained=True)
+
+    # Extract text from each page
+    for i in range(len(pages)):
+        img_path1 = pages[i]
+        img = DocumentFile.from_images(img_path1)
+        result = model(img)
+        extract_info = result.export()
+        text = " ".join([obj3["value"] for obj1 in extract_info['pages'][0]["blocks"] for obj2 in obj1["lines"] for obj3 in obj2["words"]])
+        alltext.append(text)
+        result = ' '.join(alltext)
+    # Clean up temporary directory
+    shutil.rmtree(timestamp)
+    
+    # Return the extracted text as JSON
+    print(alltext)
+    print(result)
+    return jsonify({'text': result})
+
 
 # Run the Flask app
 if __name__ == '__main__':

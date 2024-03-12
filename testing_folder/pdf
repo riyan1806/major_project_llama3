@@ -1,0 +1,70 @@
+##orginal
+# ! pip install python-doctr
+# # for TensorFlow
+# ! pip install "python-doctr[tf]"
+# # for PyTorch
+# ! pip install "python-doctr[torch]"
+
+# for converting pdf to imges
+## down poppeler from "https://github.com/oschwartz10612/poppler-windows/releases/" and extract it in "C:\Program Files"
+## then copy bin path and use
+
+#for text extraction
+# ## use : run in terminal
+# pip install --upgrade python-doctr
+# pip install --upgrade -r lib.txt
+# pip install --upgrade -r lib2.txt
+# pip install --upgrade -r lib3.txt
+
+
+from pdf2image import convert_from_path
+import os, datetime, shutil
+d = datetime.datetime.now()
+timestamp = '%04d%02d%02d%02d%02d' % (d.year, d.month, d.day, d.hour, d.minute)
+
+images = convert_from_path('50_pages.pdf',500,poppler_path=r'C:\Program Files\poppler-24.02.0\Library\bin')
+
+pages=[]
+alltext=[]
+os.makedirs(timestamp) 
+for i in range(len(images)):
+    images[i].save(timestamp + '/p'+ str(i)+ '.jpg', 'JPEG')
+    pages.append(timestamp + '/p' + str(i)+ '.jpg')
+    
+
+
+    
+from doctr.io import DocumentFile
+from doctr.models import ocr_predictor
+model = ocr_predictor(det_arch = 'db_resnet50',
+                      reco_arch = 'crnn_vgg16_bn',
+                      pretrained = True
+                     )
+#if weasyprint giving issue then download and run gk3 runtime from "https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases" 
+# after running restart computer
+
+for i in range (len(pages)):
+    
+    img_path1 = pages[i]
+    img = DocumentFile.from_images(img_path1)
+
+    # use pre-trained model
+    result = model(img)
+
+    # export the result as a nested dict
+    extract_info = result.export()
+    a=[]
+    for obj1 in extract_info['pages'][0]["blocks"]:
+        for obj2 in obj1["lines"]:
+            for obj3 in obj2["words"]:
+                # print(obj3["value"], end=" ")
+                a.append(obj3["value"])
+    text = " ".join(a)
+    alltext.append(text)
+    
+    
+print(str(alltext))
+
+
+if os.path.isdir(str(timestamp)):
+    shutil.rmtree(str(timestamp))

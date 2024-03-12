@@ -30,10 +30,12 @@ export default function CardWithForm() {
   const [inputText, setInputText] = useState("");
   const [selectedOption, setSelectedOption] = useState("captioning");
   const [audioFile, setAudioFile] = useState(null);
+  const [pdfFile, setPdfFile] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [summarizationResult, setSummarizationResult] = useState("");
   const [audio_result, setAudioResult] = useState("");
+  const [pdf_result, setPdfResult] = useState("");
   const [image_result1 , setImageResult1] = useState("");
   const [generatedText, setGeneratedText] = useState(null);
   const [image_result2 , setImageResult2] = useState("");
@@ -64,12 +66,17 @@ export default function CardWithForm() {
     if (selectedFile) {
       setAudioFile(selectedFile);
       setAudioSrc(selectedFile);
-
-
-
-
     }
   };
+
+  const handlePdfChange = (e) => {
+    const selectedFile = e.target.files[0];
+  
+    if (selectedFile) {
+      setPdfFile(selectedFile);
+    }
+  };
+
   const handleImageChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
@@ -197,12 +204,52 @@ export default function CardWithForm() {
       setError("An error occurred");
     }
   };
-  
+  const handleOCR = async () => {
+    try {
+        const formData = new FormData();
+        formData.append("pdf_file", pdfFile);
+
+        const response = await fetch("http://localhost:5000/extract_text", {
+            method: "POST",
+            body: formData,
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        if (response.ok) {
+            const extractedText = result.text;
+
+            const summarizationFormData = new FormData();
+            summarizationFormData.append("text", extractedText);
+
+            const summarizationResponse = await fetch("http://localhost:5000/summarize/text", {
+                method: "POST",
+                body: summarizationFormData,
+            });
+
+            const summarizationResult = await summarizationResponse.json();
+
+            if (summarizationResponse.ok) {
+                console.log(summarizationResult);
+                setPdfResult(summarizationResult.result);
+                setError("");
+            } else {
+                setError(summarizationResult.error || "An error occurred");
+            }
+        } else {
+            setError(result.error || "An error occurred");
+        }
+    } catch (error) {
+        setError("An error occurred");
+    }
+};
+
   const tags = image_result2?.result?.tags;
   
   function countWords(text) {
     // Remove leading and trailing whitespaces
-    text = text.trim();
+    text = String(text).trim();
   
     // Split the text into an array of words
     let words = text.split(/\s+/);
@@ -235,6 +282,7 @@ export default function CardWithForm() {
                     <SelectItem value="text">Text</SelectItem>
                     <SelectItem value="audio">Audio</SelectItem>
                     <SelectItem value="image">Image</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
                   </SelectContent>
                 </Select>
                 {input === "text" && (
@@ -264,6 +312,12 @@ export default function CardWithForm() {
                       <AudioPlayer audioSrc={audioSrc} />
                     </div>
                 )}
+                  </div>
+                )}
+                 {input === "pdf" && (
+                  <div className="flex flex-col space-y-2 pt-3">
+                    <Label htmlFor="name">Upload PDF File:</Label>
+                    <Input type="file" accept=".pdf" onChange={handlePdfChange} />
                   </div>
                 )}
                 {input === "image" && (
@@ -317,6 +371,11 @@ export default function CardWithForm() {
             Summarize
             </Button>
           )}
+          {input ==="pdf" && (
+           <Button className="w-fit" onClick={handleOCR}>
+            Summarize
+            </Button>
+          )}
           {input ==="image" && selectedOption === "captioning" && (
            <Button className="w-fit" onClick={handleImageCaptioning}>
             Summarize
@@ -343,7 +402,22 @@ export default function CardWithForm() {
                 <TextToSpeechButton summarizedText={summarizationResult}/>      
               </div>
             )} 
-              {audio_result && input==="audio" &&  (
+              {pdf_result && input==="pdf" &&  (
+              <div className="">
+                <h2 className="justify-center py-2">Summarization Result:</h2>
+                <Textarea className="pt-5 h-[200px] ">
+                  {pdf_result}
+                </Textarea>
+                <div className="flex flex-row space-x-4">
+                    <p className="py-2">Summary Character Count: {pdf_result.length}</p>
+                    <p className="py-2">
+                      Summary Word Count: {countWords(pdf_result)}
+                    </p>
+                </div>
+                <TextToSpeechButton summarizedText={pdf_result}/>      
+              </div>
+            )}
+            {audio_result && input==="audio" &&  (
               <div className="">
                 <h2 className="justify-center py-2">Summarization Result:</h2>
                 <Textarea className="pt-5 h-[200px] ">
