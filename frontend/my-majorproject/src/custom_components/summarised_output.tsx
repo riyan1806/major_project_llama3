@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import { useState } from 'react'
 import TextToSpeechButton from './tts'
 import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@radix-ui/react-label';
 
 
 const summarised_output = props => { 
@@ -31,9 +32,9 @@ const summarised_output = props => {
             {summarizationResult && (
               <div className="">
                 <h2 className="justify-center py-2">Summarization Result:</h2>
-                <Textarea disabled className="pt-5 h-[200px] ">
+                <Label className="pt-5 h-[200px] ">
                   {summarizationResult}
-                </Textarea>
+                </Label>
                 <div className="flex flex-row space-x-4">
                     <p className="py-2">Summary Character Count: {summarizationResult.length}</p>
                     <p className="py-2">

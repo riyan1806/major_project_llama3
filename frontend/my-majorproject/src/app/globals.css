@@ -31,28 +31,32 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
- 
     --radius: 0.5rem;
+
+
   }
 /* width */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 7px;
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #888
+  background: black
   ; 
 }
  
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: black; 
+  /* background: #2196f3;  */
+    background: rgb(167, 166, 166);
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  /* background: #2196f3;  */
+  background: rgb(167, 166, 166);
+
 }
   .dark {
     --background: 222.2 84% 4.9%;

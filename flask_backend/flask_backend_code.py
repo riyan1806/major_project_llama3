@@ -1,35 +1,40 @@
 # Import necessary libraries and modules
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer 
 import nltk
 import requests
 from pydub import AudioSegment
 import os
 import time
+# import torch
 import shutil
 import traceback
 from werkzeug.utils import secure_filename
-from flask import send_file
 from pdf2image import convert_from_bytes
-from io import BytesIO
 from doctr.io import DocumentFile
 from doctr.models import ocr_predictor
 import os
 import datetime
 import shutil
-
+from groq import Groq
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 CORS(app, origins=['http://localhost:3000'])
 # Define BART model for text summarization
+# checkpoint_text = "philschmid/bart-large-cnn-samsum"
 checkpoint_text = "facebook/bart-large-cnn"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint_text)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
 
+# tokenizer = AutoTokenizer.from_pretrained(checkpoint_text)
+# model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_text).to(device)
+client = Groq(api_key="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")
 # Define API URLs and headers for text and audio models
-API_URL_TEXT = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-HEADERS_TEXT = {"Authorization": "Bearer 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"}
+# API_URL_TEXT = "https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum"
+API_URL_TEXT = "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6"
+HEADERS_TEXT = {"Authorization": "Bearer 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"}
 
 API_URL_AUDIO = "https://api-inference.huggingface.co/models/openai/whisper-base"
 HEADERS_AUDIO = {"Authorization": "Bearer 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"}
@@ -65,20 +70,45 @@ def query_image_captioning(filename):
 # Function to summarize text using BART model
 def summarize_text(input_text):
     # Tokenize the input text and split into chunks
-    sentences = nltk.tokenize.sent_tokenize(input_text)
+    # sentences = nltk.tokenize.sent_tokenize(input_text)
     max_token_length = tokenizer.model_max_length
     chunks = [input_text[i:i+max_token_length] for i in range(0, len(input_text), max_token_length)]
-
+    print("Text before")
     # Query the text summarization model for each chunk
     final_output = [query_text({"inputs": chunk}) for chunk in chunks]
-
+    print("Text after")
     # Extract and concatenate the summary text from the model output
     result_text = "".join(item if isinstance(item, str) else item.get("summary_text", "") for sublist in final_output for item in sublist)
-
     if result_text.strip():
         return result_text
     else:
         return "No summary available"
+        # Tokenize the input text and split into chunks
+    # sentences = nltk.tokenize.sent_tokenize(input_text)
+    # max_token_length = tokenizer.model_max_length
+    # chunks = [input_text[i:i+max_token_length] for i in range(0, len(input_text), max_token_length)]
+    
+    # # Process each chunk and concatenate the results
+    # summarized_chunks = []
+    # # for chunk in chunks:
+    # #     # Tokenize the chunk
+    # #     inputs = tokenizer(chunk, return_tensors="pt", max_length=1024, truncation=True)
+    # #     # Generate summary
+    # #     summary_ids = model.generate(inputs.input_ids, max_length=130, min_length=30, length_penalty=2.0, num_beams=4, early_stopping=True)
+    # #     # Decode the summary tokens back to text
+    # #     summarized_chunk = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    # #     summarized_chunks.append(summarized_chunk)
+    # for i in range(0, len(chunks), batch_size):
+    #     batch = chunks[i:i+batch_size]
+    #     inputs = tokenizer(batch, return_tensors="pt", max_length=1024, truncation=True, padding=True)
+    #     inputs = {k: v.to(device) for k, v in inputs.items()}
+    #     summary_ids = model.generate(**inputs, max_length=130, min_length=30, length_penalty=2.0, num_beams=4, early_stopping=True)
+    #     summarized_batch = [tokenizer.decode(summary_id, skip_special_tokens=True) for summary_id in summary_ids]
+    #     summarized_chunks.extend(summarized_batch)
+    # # Concatenate the summarized chunks
+    # summarized_text = "".join(summarized_chunks)
+    # return summarized_text
+
 
 # Function to summarize audio using Whisper ASR model
 def summarize_audio(input_file, output_directory, segment_length_ms=25000):
@@ -147,25 +177,80 @@ def process_final_audio_op(final_audio_op):
     return result_string
 
 # Endpoint for text summarization
-@app.route('/summarize/text', methods=["POST"])
-def summarize_text_endpoint():
-    try:
-        # Check if 'text' is provided in the request form
-        if 'text' not in request.form:
-            return jsonify({"error": "No text provided"}), 400
+# @app.route('/summarize/text', methods=["POST"])
+# def summarize_text_endpoint():
+#     try:
+#         # Check if 'text' is provided in the request form
+#         if 'text' not in request.form:
+#             return jsonify({"error": "No text provided"}), 400
 
-        # Get the input text from the request form
-        input_text = request.form['text']
+#         # Get the input text from the request form
+#         input_text = request.form['text']
 
-        # Summarize the text
-        summarized_text = summarize_text(input_text)
+#         # Summarize the text
+#         summarized_text = summarize_text(input_text)
 
-        # Return the summarized text in the response
-        return jsonify({"result": summarized_text}), 200
-    except Exception as e:
-        # Handle exceptions and return an error response
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+#         # Return the summarized text in the response
+#         return jsonify({"result": summarized_text}), 200
+#     except Exception as e:
+#         # Handle exceptions and return an error response
+#         traceback.print_exc()
+#         return jsonify({"error": str(e)}), 500
+
+@app.route('/summarize', methods=['POST'])
+def summarize_text():
+    text = request.json.get('text')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"Summarize this text - {text} in detail",
+            }
+        ],
+        model="llama3-70b-8192",
+    )
+
+    return jsonify({'summary': chat_completion.choices[0].message.content})
+
+def summarize_text_2(text):
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"Summarize this text - {text} in detail",
+            }
+        ],
+        model="llama3-70b-8192",
+    )
+
+    return ({'summary': chat_completion.choices[0].message.content})
+
+@app.route('/summarize_pdf', methods=['POST'])
+def summarize_text_3():
+    text = request.json.get('text')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"I found this text after extracting a pdf , text - {text} ,Summarize this pdf in detail",
+            }
+        ],
+        model="llama3-70b-8192",
+    )
+
+    return jsonify({'summary': chat_completion.choices[0].message.content})
 
 # Endpoint for audio summarization
 @app.route('/summarize/audio', methods=["POST"])
@@ -190,7 +275,7 @@ def summarize_audio_endpoint():
 
         # Summarize the audio
         summarized_audio = summarize_audio(temp_audio_path, "Audio_segments")
-        summarized_text = summarize_text(summarized_audio)
+        summarized_text = summarize_text_2(summarized_audio)
 
         # Delete the temporary audio file
         if os.path.exists(temp_audio_path):

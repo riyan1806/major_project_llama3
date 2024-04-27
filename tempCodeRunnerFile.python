@@ -1,13 +1,62 @@
-import pyephem
+# import transformers
+# import torch
 
-# Create a PyEphem object for the planet you want to calculate the longitude of
-planet = pyephem.Mercury()
+# model_id = "unsloth/llama-3-8b-Instruct-bnb-4bit"
 
-# Set the date and time for which you want to calculate the longitude
-date = pyephem.Date('2023/08/04 12:00:00')
+# pipeline = transformers.pipeline(
+#     "text-generation",
+#     model=model_id,
+#     model_kwargs={
+#         "torch_dtype": torch.float16,
+#         "quantization_config": {"load_in_4bit": True},
+#         "low_cpu_mem_usage": True,
+#     },
+# )
 
-# Calculate the planet's longitude
-longitude = planet.hlon(date)
+# messages = [
+#     {"role": "system", "content": "You are a helpful assistant!"},
+#     {"role": "user", "content": """Generate an approximately fifteen-word sentence 
+#                                    that describes all this data:
+#                                    Midsummer House eatType restaurant; 
+#                                    Midsummer House food Chinese; 
+#                                    Midsummer House priceRange moderate; 
+#                                    Midsummer House customer rating 3 out of 5; 
+#                                    Midsummer House near All Bar One"""},
+# ]
 
-# Print the longitude
-print(longitude)
+# prompt = pipeline.tokenizer.apply_chat_template(
+#         messages, 
+#         tokenize=False, 
+#         add_generation_prompt=True
+# )
+
+# terminators = [
+#     pipeline.tokenizer.eos_token_id,
+#     pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+# ]
+
+# outputs = pipeline(
+#     prompt,
+#     max_new_tokens=256,
+#     eos_token_id=terminators,
+#     do_sample=True,
+#     temperature=0.6,
+#     top_p=0.9,
+# )
+
+# print(outputs[0]["generated_text"][len(prompt):])
+
+import requests
+
+API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
+headers = {"Authorization": "Bearer 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"}
+
+def query(payload):
+	response = requests.post(API_URL, headers=headers, json=payload)
+	return response.json()
+text = " Its Saturday, October 7th, and this is Brian with Thee Morning News. Give us five minutes and well give you the headlines you need to know to be in the know. On Friday, the Labor Department set U.S. employers added 336,000 jobs in September, the highest tally since January. The news initially rattled markets, briefly sending bond yields to their highest level in  16 years and pushing major US stock indices down in early trading. Treasury yields came off their highs and stocks rallied after many analysts and portfolio managers concluded that the report continued a recent trend of softening wage growth. The S&P 500 rose 1.2%, the Dow Jones industrial average added 0.9% and the NASDAQ composite.  added 1.6%. The reversal during the trading session put the spotlight on a much debated question on Wall Street whether good economic news is good or bad for stocks. On one hand, a resilient job market and strong consumer spending could boost corporate profits, but rising yields on expectations that the Fed may hold rates higher for longer  are likely to reverberate throughout the economy, including in the form of higher borrowing costs that have weighed on stock prices. Around the world, Israeli Prime Minister Benjamin Netanyahu declared war on Hamas on Saturday after the Gaza-based militant group launched an unprecedented surprise attack, firing thousands of rockets as far north as Tel Aviv and  sending fighters into southern cities near the border. The Israeli military said Hamas had launched a coordinated attack by air, land, and sea with gunmen penetrating the country from the south, in a stunning infiltration of Israels defenses. Israeli forces were battling Palestinian fighters from inside the main military headquarters in southern Israel, said  Richard Hetchd, Chief International spokesman for the Israeli military. We are at war, not in an operation, not in rounds of fighting, at war, Netanyahu said in a video statement. I instructed a wide-scale call for reserves to respond militarily at an intensity and scale that the enemy has not known before. The enemy will pay a price they have never paid before.  before,he said. The militants launched the coordinated attack just before dawn on Saturday and fired more than 2200 rockets into Israel in a matter of hours. The attack comes as the U.S. has been working to broker a historic agreement that would normalize relations between Israel and Saudi Arabia, a deal seen to have the power to transform the Middle East.  Israels response is being closely watched by the greater Arab world. Back in the U.S., during a speech on Friday about the September Jobs report, President Biden delivered a rapid fire series of false or misleading claims, saying that he has cut the debt, falsely crediting a tax policy that did not take effect until 2023 for improving the budget situation in 2021 and  2022, and misleadingly saying that he is presided over an actual surplus. At a separate moment of the speech, Mr. Biden used outdated figures to boast of setting record lows in the unemployment rates for African Americans, Hispanics, and people with disabilities. While the rates for these three groups hit record lows earlier in his presidency, he did not acknowledge that they  have all since increased to non-record levels and in fact are now higher than they were during parts of Donald Trumps presidency. And the U.S. Postal Service wants to raise the price of a stamp in what would be the third increase in a year. The Postal Service proposed a price of 68 cents up 3% from the current price of 66 cents if approved by the  Postal Regulatory Commission, the price increase would go into effect on January 21st. The mail service is overhauling its operations with a 10-year plan disclosed in March 2021 that includes charging more for services, delivering more packages, and taking a couple of days longer to deliver the mail. The plan is meant to help the postal service avoid $100 billion  dollars in projected losses. Now you know, and youre ready to go with theme warning news. Share this with a friend and subscribe to us wherever you listen to your favorite podcast. You can also sign up for our newsletter at TheemorningNews.com. Thank you for listening."
+output = query({
+	"inputs": f"summarize this text - {text}",
+})
+
+print(output)
